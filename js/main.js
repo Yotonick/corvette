@@ -40,7 +40,14 @@ function pl(keys, t) { // кусочно-линейная кривая [[t,v],..
  * ------------------------------------------------------------------ */
 const stage = $('#stage');
 const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
-const PR = Q.has('lowres') ? 0.7 : Math.min(window.devicePixelRatio || 1, 1.5);
+const MOBILE = Q.has('mobile') || matchMedia('(pointer: coarse)').matches || Math.min(innerWidth, innerHeight) < 600;
+const PR = Q.has('lowres') ? 0.7 : Math.min(window.devicePixelRatio || 1, MOBILE ? 1.25 : 1.5);
+const FLOOR_RES = MOBILE ? 0.45 : 0.6;
+const MS = MOBILE ? 2 : 4;
+// портрет: отодвигаем камеру, чтобы машина целиком помещалась по ширине
+const fitMul = () => { const a = innerWidth / innerHeight; return a >= 1.3 ? 1 : Math.min(2.3, Math.pow(1.6 / a, 0.62)); };
+const isPortrait = () => innerWidth / innerHeight < 1.0;
+document.body.classList.toggle('mobile', MOBILE);
 renderer.setPixelRatio(PR);
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -103,7 +110,7 @@ function spot(pos, target, intensity, angle, shadow = true) {
   scene.add(l, l.target);
   if (shadow) {
     l.castShadow = true;
-    l.shadow.mapSize.set(2048, 2048);
+    l.shadow.mapSize.set(MOBILE ? 1024 : 2048, MOBILE ? 1024 : 2048);
     l.shadow.camera.near = 3;
     l.shadow.camera.far = 25;
     l.shadow.bias = -0.0003;
@@ -198,10 +205,10 @@ const FloorShader = {
       float fine=fbm(vL*5.);
       uv+=(vec2(n(vL*9.),n(vL*9.+7.))-.5)*.0035*(.4+wear);
       vec3 acc=vec3(0.); float ws=0.;
-      for(int i=-6;i<=6;i++){
+      for(int i=-${MOBILE ? 3 : 6};i<=${MOBILE ? 3 : 6};i++){
         float f=float(i);
         float w=exp(-f*f*.075);
-        float sp=(1.4+wear*2.2);
+        float sp=(1.4+wear*2.2)*${MOBILE ? '1.9' : '1.'};
         acc+=texture2D(tDiffuse,uv+vec2(0.,f*uTexel.y*sp)).rgb*w;
         acc+=texture2D(tDiffuse,uv+vec2(f*uTexel.x*sp*.7,0.)).rgb*w*.5;
         ws+=w*1.5;
@@ -219,12 +226,12 @@ const FloorShader = {
     }`
 };
 const floor = new Reflector(new THREE.PlaneGeometry(120, 120), {
-  textureWidth: Math.floor(innerWidth * PR * 0.6), textureHeight: Math.floor(innerHeight * PR * 0.6),
-  clipBias: 0.003, shader: FloorShader, multisample: 4,
+  textureWidth: Math.floor(innerWidth * PR * FLOOR_RES), textureHeight: Math.floor(innerHeight * PR * FLOOR_RES),
+  clipBias: 0.003, shader: FloorShader, multisample: MS,
 });
 floor.rotation.x = -Math.PI / 2;
 scene.add(floor);
-floor.material.uniforms.uTexel.value.set(1 / (innerWidth * PR * 0.6), 1 / (innerHeight * PR * 0.6));
+floor.material.uniforms.uTexel.value.set(1 / (innerWidth * PR * FLOOR_RES), 1 / (innerHeight * PR * FLOOR_RES));
 
 // мягкая контактная тень
 function radialTex(inner = 0, stops) {
@@ -272,7 +279,7 @@ function hazeLayer(y, scale, k, seed) {
 const hazes = [hazeLayer(0.1, 40, 0.34, 0.0), hazeLayer(0.55, 40, 0.18, 9.0)];
 
 /* пыль в лучах */
-const dustCount = 700;
+const dustCount = MOBILE ? 300 : 700;
 const dustGeo = new THREE.BufferGeometry();
 {
   const p = new Float32Array(dustCount * 3), s = new Float32Array(dustCount);
@@ -361,8 +368,10 @@ function prepareCar(gltf) {
         mats.paint = m;
         break;
       case 'Mesh10Mtl': // стёкла
-        m.color.set(0x050506); m.metalness = 0.0; m.roughness = 0.14;
-        m.transparent = true; m.opacity = 0.5; m.depthWrite = false; m.envMapIntensity = 1.0;
+        m.color.set(0x050506); m.metalness = 0.0; m.roughness = 0.32;
+        if ('specularIntensity' in m) m.specularIntensity = 0.7;
+        if ('clearcoat' in m) m.clearcoat = 0; // иначе слой лака даёт зеркальный блик от прожектора
+        m.transparent = true; m.opacity = 0.5; m.depthWrite = false; m.envMapIntensity = 0.8;
         o.castShadow = false; o.renderOrder = 3;
         mats.glass = m;
         break;
@@ -401,7 +410,7 @@ function prepareCar(gltf) {
 /* ------------------------------------------------------------------ *
  *  Постобработка
  * ------------------------------------------------------------------ */
-const rtMS = new THREE.WebGLRenderTarget(innerWidth * PR, innerHeight * PR, { type: THREE.HalfFloatType, samples: 4 });
+const rtMS = new THREE.WebGLRenderTarget(innerWidth * PR, innerHeight * PR, { type: THREE.HalfFloatType, samples: MS });
 const composer = new EffectComposer(renderer, rtMS);
 composer.setPixelRatio(PR);
 composer.setSize(innerWidth, innerHeight);
@@ -522,10 +531,12 @@ function setChapter(i) {
 const state = { mode: 'loading', t0: 0, p: 0, pt: 0, introT: 0, free: false, blend: 1 };
 const pose = {}, introP = {}, tmpPose = {};
 const mouse = { x: 0, y: 0, sx: 0, sy: 0 };
-addEventListener('pointermove', (e) => { mouse.x = e.clientX / innerWidth - 0.5; mouse.y = e.clientY / innerHeight - 0.5; });
+addEventListener('pointermove', (e) => {
+  if (e.pointerType === 'touch') return; mouse.x = e.clientX / innerWidth - 0.5; mouse.y = e.clientY / innerHeight - 0.5; });
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enabled = false;
+renderer.domElement.style.touchAction = 'pan-y';
 controls.enableDamping = true; controls.dampingFactor = 0.06;
 controls.minDistance = 2.2; controls.maxDistance = 14;
 controls.maxPolarAngle = Math.PI / 2 - 0.015;
@@ -534,10 +545,14 @@ controls.rotateSpeed = 0.6; controls.zoomSpeed = 0.7;
 
 let lastShift = 999;
 function applyShift(frac) {
-  if (Math.abs(frac - lastShift) < 1e-4) return;
-  lastShift = frac;
-  if (Math.abs(frac) < 1e-4) camera.clearViewOffset();
-  else camera.setViewOffset(innerWidth, innerHeight, -frac * innerWidth, 0, innerWidth, innerHeight);
+  // в портрете текст внизу, поэтому машину сдвигаем вверх, а не вбок
+  const port = isPortrait();
+  const fx = port ? 0 : frac, fy = port ? 0.17 : 0;
+  const key = fx * 10 + fy * 100 + (port ? 1000 : 0);
+  if (Math.abs(key - lastShift) < 1e-3) return;
+  lastShift = key;
+  if (Math.abs(fx) < 1e-4 && Math.abs(fy) < 1e-4) camera.clearViewOffset();
+  else camera.setViewOffset(innerWidth, innerHeight, -fx * innerWidth, fy * innerHeight, innerWidth, innerHeight);
 }
 
 const freeBtn = $('#freebtn');
@@ -548,12 +563,14 @@ freeBtn.addEventListener('click', () => {
     state.free = true;
     controls.target.copy(tmpPose.tar || new THREE.Vector3(0, 0.5, 0));
     controls.enabled = true;
+    renderer.domElement.style.touchAction = 'none';
     document.body.classList.add('free-mode', 'locked');
     freeBtn.textContent = 'Вернуться к показу';
     applyShift(0);
   } else {
     state.free = false;
     controls.enabled = false;
+    renderer.domElement.style.touchAction = 'pan-y';
     exitBlend = { t: 0, fromPos: camera.position.clone(), fromTar: controls.target.clone(), fromFov: camera.fov };
     document.body.classList.remove('free-mode', 'locked');
     freeBtn.textContent = 'Свободная камера';
@@ -609,6 +626,7 @@ function frame() {
     fx = samplePath(0, tmpPose).fx;
     introPose(t, introP);
     camera.position.copy(introP.pos);
+    camera.position.sub(introP.tar).multiplyScalar(fitMul()).add(introP.tar);
     camera.fov = introP.fov;
     camera.lookAt(introP.tar);
     applyShift(0);
@@ -648,6 +666,7 @@ function frame() {
       mouse.sy += (mouse.y - mouse.sy) * (1 - Math.exp(-dt * 2.5));
       const T = timeAcc;
       camera.position.copy(pp);
+      if (!exitBlend) camera.position.sub(tt).multiplyScalar(fitMul()).add(tt);
       _f.subVectors(tt, pp).normalize();
       _r.crossVectors(_f, camera.up).normalize();
       _u.crossVectors(_r, _f).normalize();
@@ -656,7 +675,7 @@ function frame() {
         .addScaledVector(_u, -mouse.sy * 0.14 + Math.sin(T * 0.51 + 1.3) * 0.015);
       camera.fov = ff;
       camera.lookAt(tt);
-      applyShift(exitBlend ? lerp(lastShift, pose.shift, 0.1) : pose.shift);
+      applyShift(pose.shift);
     }
   }
 
@@ -698,14 +717,17 @@ function startIntro() {
 /* ------------------------------------------------------------------ *
  *  Resize
  * ------------------------------------------------------------------ */
+let lastW = innerWidth, lastH = innerHeight;
 addEventListener('resize', () => {
+  if (MOBILE && innerWidth === lastW && Math.abs(innerHeight - lastH) < 160) return;
+  lastW = innerWidth; lastH = innerHeight;
   renderer.setSize(innerWidth, innerHeight);
   composer.setSize(innerWidth, innerHeight);
   bloom.setSize(innerWidth, innerHeight);
   camera.aspect = innerWidth / innerHeight;
   lastShift = 999;
-  floor.getRenderTarget().setSize(Math.floor(innerWidth * PR * 0.6), Math.floor(innerHeight * PR * 0.6));
-  floor.material.uniforms.uTexel.value.set(1 / (innerWidth * PR * 0.6), 1 / (innerHeight * PR * 0.6));
+  floor.getRenderTarget().setSize(Math.floor(innerWidth * PR * FLOOR_RES), Math.floor(innerHeight * PR * FLOOR_RES));
+  floor.material.uniforms.uTexel.value.set(1 / (innerWidth * PR * FLOOR_RES), 1 / (innerHeight * PR * FLOOR_RES));
   recalcScroll();
 });
 
@@ -745,4 +767,4 @@ loader.load(
   }
 );
 
-window.__cv = { state, KEYS, scene, camera, renderer };
+window.__cv = { state, KEYS, scene, camera, renderer, beams, hazes, dust, flaresHead: () => flaresHead, blob, floor, lTop, lA, lB };

@@ -93,4 +93,45 @@ body.title-on #c0 .sub{opacity:1}
 body.free-mode #freehint{opacity:1}
 body.free-mode #counter{opacity:0}
 #c0{pointer-events:none}
-@media (max-width:760px){.chap.left,.chap.right{left:20px;right:20px;text-align:left}#dots{display:none}}
+
+.mb{display:none}
+body.mobile .dk{display:none}
+body.mobile .mb{display:inline}
+html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+#loader{height:100dvh}
+
+@media (max-width:820px),(pointer:coarse) and (max-width:1100px){
+  #scroller{height:700vh}
+  .bar{height:7vh}
+  #brand{top:calc(18px + env(safe-area-inset-top));left:20px;font-size:9px;letter-spacing:.24em}
+  #dots{display:none}
+  #credit{left:20px;right:20px;transform:none;bottom:calc(14px + env(safe-area-inset-bottom));font-size:8px;letter-spacing:.08em;line-height:1.5;text-align:left;opacity:.8}
+  #counter{left:20px;bottom:calc(40px + env(safe-area-inset-bottom));font-size:9px;letter-spacing:.2em}
+  #free{right:20px;bottom:calc(36px + env(safe-area-inset-bottom))}
+  #free button{padding:9px 12px;font-size:9px;letter-spacing:.2em}
+  #hint{left:20px;top:calc(50px + env(safe-area-inset-top));bottom:auto;font-size:9px}
+  #hint i{height:30px}
+  #freehint{left:20px;right:20px;bottom:calc(40px + env(safe-area-inset-bottom));font-size:9px;letter-spacing:.14em;line-height:1.5}
+  body.free-mode #free{bottom:calc(64px + env(safe-area-inset-bottom))}
+  body.free-mode #freehint{left:20px;bottom:calc(36px + env(safe-area-inset-bottom));right:20px}
+
+  /* текст — внизу, под машиной */
+  .chap.left,.chap.right,.chap.mid{left:20px;right:20px;top:auto;bottom:calc(92px + env(safe-area-inset-bottom));text-align:left}
+  .chap.right p,.chap.mid p{margin-left:0;margin-right:0}
+  .chap::before{content:"";position:absolute;left:-20px;right:-20px;top:-80px;bottom:-92px;z-index:-1;background:linear-gradient(to top,rgba(3,3,3,.92) 35%,rgba(3,3,3,0));pointer-events:none}
+  .chap h2{font-size:clamp(34px,11.5vw,58px);line-height:.92}
+  .chap .no{font-size:9px;margin-bottom:10px}
+  .chap p{font-size:12px;line-height:1.6;margin-top:14px;max-width:none}
+  #c0{bottom:calc(120px + env(safe-area-inset-bottom));text-align:center}
+  #c0 h2{font-size:clamp(46px,17vw,90px)}
+  #c0 .sub{font-size:9px;letter-spacing:.32em;margin-top:14px}
+  #c0::before{display:none}
+  .specs{margin-top:14px;width:100%}
+  .specs div{padding:6px 0;font-size:11px;gap:16px}
+  .specs dt{font-size:9px;letter-spacing:.12em}
+  #c6 h2{font-size:clamp(30px,9vw,46px)}
+}
+@media (max-height:520px) and (orientation:landscape){
+  .chap h2{font-size:clamp(30px,8vh,56px)}
+  .chap p{display:none}
+}
