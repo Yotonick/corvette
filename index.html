@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Corvette C5 — Chevrolet</title>
+<meta name="description" content="Chevrolet Corvette C5 — интерактивная 3D-презентация.">
+<meta name="theme-color" content="#030303">
+<link rel="stylesheet" href="css/style.css">
+<link rel="preload" href="models/corvette_c5.glb" as="fetch" crossorigin>
+</head>
+<body class="locked">
+
+<div id="stage"></div>
+<div id="scroller"></div>
+
+<div class="bar t"></div><div class="bar b"></div>
+
+<div id="loader"><div class="line"><i id="lbar"></i></div><div class="txt" id="ltxt">Загрузка 0%</div></div>
+
+<div class="hud" id="brand"><b>Chevrolet</b> Corvette <span>C5</span></div>
+<div class="hud" id="dots"></div>
+<div class="hud" id="counter"><em id="cnum">01</em> / 08 &nbsp;—&nbsp; <span id="cname">Корвет</span></div>
+<div class="hud" id="hint">Скролл<i></i></div>
+<div class="hud" id="free"><button id="freebtn" type="button">Свободная камера</button></div>
+<div class="hud" id="freehint">Тяни — вращать · колесо — зум · правая кнопка — сдвиг</div>
+<div class="hud" id="credit">Модель: <a href="https://sketchfab.com/3d-models/chevrolet-corvette-c5-black-604ffcf3bb544ae9b653e8cfc1fae87a" target="_blank" rel="noopener">Chevrolet Corvette C5 (Black)</a> — Randomness · <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a></div>
+
+<section class="chap mid" id="c0">
+  <span class="no">Chevrolet</span>
+  <h2><span class="glitch">CORVETTE</span> <span class="r" style="color:var(--red-hot)">C5</span></h2>
+  <span class="sub">Пятое поколение · 1997–2004</span>
+</section>
+
+<section class="chap left" id="c1">
+  <span class="no">02 — Профиль</span>
+  <h2>Низко.<br>Длинно.<br><span class="r">Злобно.</span></h2>
+  <p>Длинный капот, короткая корма, двигатель спереди и привод на задние колёса. Классическая пропорция американского спорткара.</p>
+</section>
+
+<section class="chap right" id="c2">
+  <span class="no">03 — Задний свет</span>
+  <h2>Четыре<br><span class="r">красных</span><br>глаза.</h2>
+  <p>Круглые задние фонари — фирменная деталь Corvette. В темноте остаётся только красное.</p>
+</section>
+
+<section class="chap left" id="c3">
+  <span class="no">04 — Колёса</span>
+  <h2>Чёрное<br>на <span class="r">чёрном</span>.</h2>
+  <p>Широкая колея, низкий профиль, тёмные диски. Всё внимание уходит в асфальт.</p>
+</section>
+
+<section class="chap right" id="c4">
+  <span class="no">05 — Салон</span>
+  <h2>Внутри<br><span class="r">красно.</span></h2>
+  <p>Красная отделка на чёрном кузове. Салон проявляется из темноты, когда включается свет внутри.</p>
+</section>
+
+<section class="chap left" id="c5">
+  <span class="no">06 — Кокпит</span>
+  <h2>Сверху<br>вниз.</h2>
+  <p>Камера поднимается над лобовым стеклом и смотрит прямо на передние кресла и панель приборов.</p>
+</section>
+
+<section class="chap right" id="c6">
+  <span class="no">07 — Характеристики</span>
+  <h2>C5<br><span class="r">в цифрах</span></h2>
+  <dl class="specs">
+    <div><dt>Годы выпуска</dt><dd>1997–2004</dd></div>
+    <div><dt>Двигатель</dt><dd>V8 LS1, 5,7 л<br>(Z06 — LS6)</dd></div>
+    <div><dt>Привод</dt><dd>Задний</dd></div>
+    <div><dt>Компоновка</dt><dd>Мотор спереди, КПП сзади</dd></div>
+    <div><dt>Кузов</dt><dd>Композитные панели</dd></div>
+  </dl>
+</section>
+
+<section class="chap left" id="c7">
+  <span class="no">08 — Финал</span>
+  <h2>Теперь<br><span class="r">твоя</span> камера.</h2>
+  <p>Нажми «Свободная камера» справа внизу и крути машину как хочешь.</p>
+</section>
+
+<script>if(location.protocol==="file:"){addEventListener("DOMContentLoaded",function(){document.getElementById("ltxt").innerHTML="Открой через сервер, а не двойным кликом.<br>Например: python -m http.server — см. README";document.getElementById("ltxt").style.lineHeight="2"})}</script>
+<script type="importmap">
+{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/addons/"}}
+</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
